@@ -1,5 +1,7 @@
 # fileserve
 
+This package will help you quickly setup a basic server for serving webpages. The server uses configuration files (called tagfiles) to determine how requests are handled. These files can be modified live.
+
 ## Run the example
 
 ### Go code
