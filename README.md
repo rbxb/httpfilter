@@ -42,7 +42,7 @@ A request for `value1` will redirect the request to the URL `value2`.
 - You may have a tag file outside of the root directory in the same directory that root is in.  
 - Only one tag handler will be executed per request. You *cannot* make an infinite loop of `#pseudo`, though you *can* make a redirect loop. 
 - When writing tag files, you don't have to specify the tag on every line. Make sure to use linebreaks, e.g.
-```css
+```
 #pseudo
 	home home.html
 	about about.html
