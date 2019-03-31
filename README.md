@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	server := fileserve.NewServer("../root", nil)
+	server := fileserve.NewServer("./root", nil)
 	http.ListenAndServe(":8080", server)
 }
 ```
@@ -92,10 +92,9 @@ A request for `value1` will redirect the request to the URL `value2`.
 	secrets.txt
 ```
 - You can use `*` to select all files, e.g. `#ignore *` will hide all the files in the directory.
-- You can change the name of the tagfiles:
+- You can change the name of the tagfiles. By default the tagfile name is `_tags.txt`.
 ```go
 Server.SetTagfileName(name string)
 ```
-By default it's `_tags.txt`.
 - You can create custom tags too. See `request` and `reverseproxy` as examples.
 - You can overwrite the default tag handler functions (`#ignore`, `#pseudo`, `#redirect`, and `#default`) with your own handlers.

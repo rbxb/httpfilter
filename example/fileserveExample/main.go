@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	server := fileserve.NewServer("../root", nil)
+	server := fileserve.NewServer("./root", nil)
 	http.ListenAndServe(":8080", server)
 }
