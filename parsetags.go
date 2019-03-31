@@ -17,18 +17,18 @@ func parseTagdata(b []byte) [][]string {
 				continue
 			}
 			if token[0] == 0x23 {
-				entries = flushEntry(tag, vals, entries)
+				entries = appendEntry(tag, vals, entries)
 				tag = token[1:]
 			} else {
 				vals = append(vals, token)
 			}
 		}
-		entries = flushEntry(tag, vals, entries)
+		entries = appendEntry(tag, vals, entries)
 	}
 	return entries
 }
 
-func flushEntry(tag string, vals []string, entries [][]string) [][]string {
+func appendEntry(tag string, vals []string, entries [][]string) [][]string {
 	if tag != "" && len(vals) > 0 {
 		entry := append([]string{tag}, vals...)
 		entries = append(entries, entry)

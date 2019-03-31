@@ -33,14 +33,12 @@ func NewServer(root string, tagHandlers map[string]TagHandler) * Server {
 }
 
 func(srvr * Server) ServeHTTP(w http.ResponseWriter, req * http.Request) {
+	tags := make([][]string, 0)
 	p := filepath.Join(srvr.root, filepath.Clean("/" + req.URL.Path))
 	b, err := ioutil.ReadFile(filepath.Join(filepath.Dir(p), srvr.tagfile))
-	if err != nil {
-		http.Error(w, "Internal error.", 500)
-		return
+	if err == nil {
+		tags = parseTagdata(b)
 	}
-
-	tags := parseTagdata(b)
 	tags = append(tags, []string{"default", "*"})
 	base := filepath.Base(p)
 	for _, vals := range tags {
