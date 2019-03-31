@@ -4,21 +4,19 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"github.com/rbxb/fileserve"
+	"errors"
 )
 
-func ReverseProxyTagHandler(vals []string, p * string, w http.ResponseWriter, req * http.Request, written * bool) {
-	if len(vals) < 0 {
-		http.Error(w, "No url specified.", 500)
-		*written = true
-		return
+func ReverseProxyTagHandler(srvr * fileserve.Server, vals []string, w http.ResponseWriter, req * http.Request) error {
+	if len(vals) < 2 {
+		return fileserve.ErrorNotEnoughArguments
 	}
-	u, err := url.Parse(vals[0])
+	u, err := url.Parse(vals[1])
 	if err != nil {
-		http.Error(w, "Error parsing url.", 500)
-		*written = true
-		return
+		return errors.New("Couldn't parse URL.")
 	}
 	proxy := httputil.NewSingleHostReverseProxy(u)
 	proxy.ServeHTTP(w, req)
-	*written = true
+	return nil
 }

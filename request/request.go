@@ -3,25 +3,23 @@ package request
 import (
 	"io/ioutil"
 	"net/http"
-	"path/filepath"
+	"github.com/rbxb/fileserve"
 )
 
-func RequestTagHandler(vals []string, p * string, w http.ResponseWriter, req * http.Request, written * bool) {
-	basename := filepath.Base(*p)
-	for i := 0; i + 1 < len(vals); i += 2 {
-		if vals[i] == basename || vals[i] == "*" {
-			if !*written {
-				resp, err := http.Get(vals[i + 1])
-				if err != nil {
-					panic(err)
-				}
-				defer resp.Body.Close()
-				b, err := ioutil.ReadAll(resp.Body)
-				w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
-				w.Write(b)
-				*written = true
-				break
-			}
-		}
+func RequestTagHandler(srvr * fileserve.Server, vals []string, w http.ResponseWriter, req * http.Request) error {
+	if len(vals) < 2 {
+		return fileserve.ErrorNotEnoughArguments
 	}
+	resp, err := http.Get(vals[1])
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
+	w.Write(b)
+	return nil
 }
