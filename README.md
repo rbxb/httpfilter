@@ -1,9 +1,8 @@
 # fileserve
 
-`$ go get github.com/rbxb/fileserve`
+## Run the example
 
-## Usage example
-
+### Go code
 ```go
 package main
 
@@ -13,35 +12,77 @@ import (
 )
 
 func main() {
-	server := fileserve.NewServer("C:/mywebsite/root", nil)
+	server := fileserve.NewServer("../root", nil)
 	http.ListenAndServe(":8080", server)
 }
 ```
-  
-See the `exmaple/directoryExample` folder for an example of how to setup a directory.
+
+Download and install the Go project from `example/fileserveExample`.
+```shell
+$ go get github.com/rbxb/fileserve
+$ go install github.com/rbxb/fileserve/example/fileserveExample
+```
+Or create a new Go project and paste in the code from above.
+
+### Website Directory
+Use `example/directoryExample` as the website's directory or create your own.
+```
+directoryExample
+ | root
+ | | home.html
+ | | secret.txt
+ | | _tags.txt
+```
+**home.html**
+```html
+<h1>Hello world!</h1>
+```
+**secret.txt**
+```
+This is a document that you don't want people to be able to access.
+```
+**_tags.txt**
+```
+#pseudo home home.html
+#ignore secret.txt
+```
+
+### Test it
+
+Run `fileserveExample` with `example/directoryExmaple` as the working directory.
+```shell
+$ cd example/directoryExmaple
+$ fileserveExample
+```
+
+Go to `http://localhost:8080/home` in a browser.
+
+`http://localhost:8080/home` should return the `home.html` file.
+`http://localhost:8080/secret.txt` should be a 404 (Not found) error.
 
 ## Tag files
-By default, these are files named `_tags.txt`.  
-When a file is requested, the server will first check for a tag file in the parent directory of the requested file. The server will look for a tag where the first value matches the requested file, then modify the request using a handler function. Only one tag handler will be executed per request.  
-Tag files can be changed without restarting the server.
+- By default, these are files named `_tags.txt`.
+- When a file is requested, the server will first check for a tag file in the parent directory of the requested file. The server will look for a tag where the first value matches the name of the requested file. The request is handled based on the tag name.
+- Only one tag handler function will be executed per request.
+- Tag files can be modified without restarting the server.
 
-## Tags
+## Default Tags
 
-**`#ignore value1`**  
-Trying to access the file named `value1` will result in a 404 error. Use this to prevent people from accessing certain files.  
-  
-**`#pseudo value1 value2`**  
-Getting the file named `value1` will instead get the file named `value2`.  
-  
-**`#redirect value1 value2`**  
-A request for `value1` will redirect the request to the URL `value2`.  
+### `#ignore value1`
+Trying to access the file named `value1` will result in a 404 error. Use this to prevent people from accessing certain files.
+
+### `#pseudo value1 value2`
+Getting the file named `value1` will instead get the file named `value2`.
+
+### `#redirect value1 value2`
+A request for `value1` will redirect the request to the URL `value2`.
 
 ## Other notes
 
-- It (should be) impossible to retrieve files that are outside of the root directory.  
-- You may have a tag file outside of the root directory in the same directory that root is in.  
-- Only one tag handler will be executed per request. You *cannot* make an infinite loop of `#pseudo`, though you *can* make a redirect loop. 
-- When writing tag files, you don't have to specify the tag on every line. Make sure to use linebreaks, e.g.
+- It (should be) impossible to retrieve files that are outside of the root directory.
+- You may have a tag file outside of the root directory in the same directory that root is in. You can use this to select requests which have no path, e.g. the request `http://localhost:8080` with no path could be selected using the name `root`.
+- Only one tag handler will be executed per request. You *cannot* make an infinite loop of `#pseudo`, though you *can* make a redirect loop.
+- When writing tag files, you don't have to specify the tag on every line--use linebreaks and indents, e.g.
 ```
 #pseudo
 	home home.html
@@ -50,6 +91,11 @@ A request for `value1` will redirect the request to the URL `value2`.
 #ignore
 	secrets.txt
 ```
+- You can use `*` to select all files, e.g. `#ignore *` will hide all the files in the directory.
+- You can change the name of the tagfiles:
+```go
+Server.SetTagfileName(name string)
+```
+By default it's `_tags.txt`.
 - You can create custom tags too. See `request` and `reverseproxy` as examples.
-- You can overwrite the default tags (`#ignore`, `#pseudo`, `#redirect`, and `#default`) with your own.
-- You can use `*` to select all files, e.g. `#ignore *`
+- You can overwrite the default tag handler functions (`#ignore`, `#pseudo`, `#redirect`, and `#default`) with your own handlers.
