@@ -33,15 +33,15 @@ directoryExample
  | | secret.txt
  | | _tags.txt
 ```
-**home.html**
+#### home.html
 ```html
 <h1>Hello world!</h1>
 ```
-**secret.txt**
+#### secret.txt
 ```
 This is a document that you don't want people to be able to access.
 ```
-**_tags.txt**
+#### _tags.txt
 ```
 #pseudo home home.html
 #ignore secret.txt
@@ -68,14 +68,46 @@ Go to `http://localhost:8080/home` in a browser.
 
 ## Default Tags
 
-### `#ignore value1`
+#### `#ignore value1`
 Trying to access the file named `value1` will result in a 404 error. Use this to prevent people from accessing certain files.
 
-### `#pseudo value1 value2`
+#### `#pseudo value1 value2`
 Getting the file named `value1` will instead get the file named `value2`.
 
-### `#redirect value1 value2`
+#### `#redirect value1 value2`
 A request for `value1` will redirect the request to the URL `value2`.
+
+## Custom Tags
+Look at `request` and `reverseproxy` as examples.
+Import the `request` package and attach the custom tag handler to your server like this:
+#### main.go
+```go
+package main
+
+import (
+	"net/http"
+	"github.com/rbxb/fileserve"
+	"github.com/rbxb/fileserve/request"
+)
+
+func main() {
+	server := fileserve.NewServer("./root", map[string]fileserve.TagHandler{
+		"request": request.RequestTagHandler,
+	})
+	http.ListenAndServe(":8080", server)
+}
+```
+Now **`#request value1 value2`** will perform a GET request to the URL in `value2` and respond with the response.
+Try it by adding this to your tagfile:
+```
+#request google https://google.com
+```
+`localhost:8080/google` should show the html from `google.com`.
+
+Write your own custom tag handlers in Go. A tag handler function follows this type:
+```go
+type TagHandler func(* Server, []string, http.ResponseWriter, * http.Request) error
+```
 
 ## Other notes
 
@@ -96,5 +128,4 @@ A request for `value1` will redirect the request to the URL `value2`.
 ```go
 Server.SetTagfileName(name string)
 ```
-- You can create custom tags too. See `request` and `reverseproxy` as examples.
 - You can overwrite the default tag handler functions (`#ignore`, `#pseudo`, `#redirect`, and `#default`) with your own handlers.
