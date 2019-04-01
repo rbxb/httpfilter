@@ -62,6 +62,16 @@ Go to `http://localhost:8080/home` in a browser.
 `http://localhost:8080/home` should return the `home.html` file.
 `http://localhost:8080/secret.txt` should be a 404 (Not found) error.
 
+## Using the cmd
+
+### Installation
+`go install github.com/rbxb/fileserve/cmd`
+
+### Usage
+flags:
+* -port: The address:port the fileserver runs on. (:8080)
+* -directory: The directory to serve files from. (./root)
+
 ## Tag files
 - By default, these are files named `_tags.txt`.
 - When a file is requested, the server will first check for a tag file in the parent directory of the requested file. The server will look for a tag where the first value matches the name of the requested file. The request is handled based on the tag name.
