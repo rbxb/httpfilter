@@ -2,9 +2,13 @@
 
 This package will help you quickly setup a basic server for serving webpages. The server uses configuration files (called tagfiles) to determine how requests are handled. These files can be modified live.
 
-## Run the example
+## Tutorial
+See `tutorial.md`.
 
-### Go code
+## Usage Example
+```shell
+$ go get github.com/rbxb/fileserve
+```
 ```go
 package main
 
@@ -19,62 +23,25 @@ func main() {
 }
 ```
 
-Download and install the Go project from `example/fileserveExample`.
-```shell
-$ go get github.com/rbxb/fileserve
-$ go install github.com/rbxb/fileserve/example/fileserveExample
-```
-Or create a new Go project and paste in the code from above.
-
-### Website Directory
-Use `example/directoryExample` as the website's directory or create your own.
-```
-directoryExample
- | root
- | | home.html
- | | secret.txt
- | | _tags.txt
-```
-#### home.html
-```html
-<h1>Hello world!</h1>
-```
-#### secret.txt
-```
-This is a document that you don't want people to be able to access.
-```
-#### _tags.txt
-```
-#pseudo home home.html
-#ignore secret.txt
-```
-
-### Test it
-
-Run `fileserveExample` with `example/directoryExmaple` as the working directory.
-```shell
-$ cd example/directoryExmaple
-$ fileserveExample
-```
-
-Go to `http://localhost:8080/home` in a browser.
-
-`http://localhost:8080/home` should return the `home.html` file.
-`http://localhost:8080/secret.txt` should be a 404 (Not found) error.
-
 ## Using the cmd
+A simple implementation of the package to get you started.
 
-### Installation
-`go install github.com/rbxb/fileserve/cmd`
+```shell
+$ go install github.com/rbxb/fileserve/cmd/fileserve
+$ fileserve -port :8080 -directory ./root
+```
 
-### Usage
-flags:
-* -port: The address:port the fileserver runs on. (:8080)
-* -directory: The directory to serve files from. (./root)
+### Flags
 
-## Tag files
+#### `-port`
+The address:port the fileserver runs on. (:8080)
+
+#### `-directory`
+The directory to serve files from. (./root)
+
+## Tagfiles
 - By default, these are files named `_tags.txt`.
-- When a file is requested, the server will first check for a tag file in the parent directory of the requested file. The server will look for a tag where the first value matches the name of the requested file. The request is handled based on the tag name.
+- When a file is requested, the server will first check for a tagfile in the parent directory of the requested file. The server will look for a tag where the first value matches the name of the requested file. The request is handled based on the tag name.
 - Only one tag handler function will be executed per request.
 - Tag files can be modified without restarting the server.
 
@@ -92,7 +59,6 @@ A request for `value1` will redirect the request to the URL `value2`.
 ## Custom Tags
 Look at `request` and `reverseproxy` as examples.
 Import the `request` package and attach the custom tag handler to your server like this:
-#### main.go
 ```go
 package main
 
@@ -124,7 +90,8 @@ type TagHandler func(* Server, []string, http.ResponseWriter, * http.Request) er
 ## Other notes
 
 - It (should be) impossible to retrieve files that are outside of the root directory.
-- You may have a tag file outside of the root directory in the same directory that root is in. You can use this to select requests which have no path, e.g. the request `http://localhost:8080` with no path could be selected using the name `root`.
+- You may have a tag file outside of the root directory in the same directory that root is in. You can use this to select requests which have no path, e.g. a request to `localhost:8080` with no path could be selected using the name `root`.
+- Since all paths are already relative to `root/`, do not include `root` in paths in tagfiles.
 - Only one tag handler will be executed per request. You *cannot* make an infinite loop of `#pseudo`, though you *can* make a redirect loop.
 - When writing tag files, you don't have to specify the tag on every line--use linebreaks and indents, e.g.
 ```
