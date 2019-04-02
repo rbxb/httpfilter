@@ -1,5 +1,7 @@
 # Tutorial
 
+[README.md](README.md)
+
 ### Install the server
 
 Download the package and install the example server.
