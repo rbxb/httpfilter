@@ -1,2 +1,0 @@
-#pseudo home home.html
-#ignore secret.txt
