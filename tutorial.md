@@ -2,7 +2,7 @@
 
 [README.md](README.md)
 
-### Install the server
+### Install
 
 Download the package and install the example server.
 ```shell
@@ -43,6 +43,7 @@ Add this line to the `_tags.txt` file:
 ```
 
 Save and refresh `localhost:8080/secret.txt`.  
+There is no need to restart the server.  
 You should get a 404 Not Found error.
 
 ### The redirect tag
