@@ -19,7 +19,7 @@ import (
 
 func main() {
 	server := fileserve.NewServer("./root", nil)
-	http.ListenAndServe(":8080", server)
+	log.Fatal(http.ListenAndServe(":8080", server))
 }
 ```
 
@@ -72,7 +72,7 @@ func main() {
 	server := fileserve.NewServer("./root", map[string]fileserve.TagHandler{
 		"request": request.RequestTagHandler,
 	})
-	http.ListenAndServe(":8080", server)
+	log.Fatal(http.ListenAndServe(":8080", server))
 }
 ```
 Now **`#request value1 value2`** will perform a GET request to the URL in `value2` and respond with the response.
@@ -103,6 +103,12 @@ type TagHandler func(* Server, []string, http.ResponseWriter, * http.Request) er
 	secrets.txt
 ```
 - You can use `*` to select all files, e.g. `#ignore *` will hide all the files in the directory.
+- You can select requests where only the name needs to match or where only the extension needs to match, e.g.
+```
+#ignore
+	secret.*
+	*.txt
+```
 - You can change the name of the tagfiles. By default the tagfile name is `_tags.txt`.
 ```go
 Server.SetTagfileName(name string)
