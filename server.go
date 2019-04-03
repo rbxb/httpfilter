@@ -41,8 +41,16 @@ func(srvr * Server) ServeHTTP(w http.ResponseWriter, req * http.Request) {
 	}
 	tags = append(tags, []string{"default", "*"})
 	base := filepath.Base(p)
+	ext := filepath.Ext(base)
+	name := base[:len(base) - len(ext)]
 	for _, vals := range tags {
-		if len(vals) > 1 && vals[1] == base || vals[1] == "*" {
+		vbase := vals[1]
+		vext := filepath.Ext(vbase)
+		vname := vals[1][:len(vbase) - len(vext)]
+		if (vbase == base) || 				//if name and extension match
+		(vbase == "*") || 					//or if name in tagfile is *
+		(vext == ".*" && vname == name) ||  //or if name matches and extension in tagfile is *
+		(vname == "*" && vext == ext) {     //or if extension matches and name in tagfile is *
 			handler := srvr.tagHandlers[vals[0]]
 			if handler != nil {
 				err := handler(srvr, vals[1:], w, req)
