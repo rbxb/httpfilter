@@ -3,7 +3,7 @@
 This package will help you quickly setup a basic server for serving webpages. The server uses configuration files (called tagfiles) to determine how requests are handled. These files can be modified live.
 
 ## Tutorial
-See [tutorial.md](tutorial.md).
+[tutorial.md](tutorial.md).
 
 ## Usage Example
 ```shell
