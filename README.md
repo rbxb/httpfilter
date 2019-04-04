@@ -13,6 +13,7 @@ $ go get github.com/rbxb/fileserve
 package main
 
 import (
+	"log"
 	"net/http"
 	"github.com/rbxb/fileserve"
 )
@@ -63,6 +64,7 @@ Import the `request` package and attach the custom tag handler to your server li
 package main
 
 import (
+	"log"
 	"net/http"
 	"github.com/rbxb/fileserve"
 	"github.com/rbxb/fileserve/request"
