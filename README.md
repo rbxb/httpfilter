@@ -5,7 +5,7 @@ This package will help you quickly setup a basic server for serving webpages. Th
 ## Tutorial
 [tutorial.md](tutorial.md)
 
-## Usage Example
+## Basic Usage Example
 ```shell
 $ go get github.com/rbxb/fileserve
 ```
@@ -24,7 +24,7 @@ func main() {
 }
 ```
 
-## Using the cmd
+## cmd/fileserve
 A simple implementation of the package to get you started.
 
 ```shell
@@ -35,59 +35,65 @@ $ fileserve -port :8080 -directory ./root
 ### Flags
 
 #### `-port`
-The address:port the fileserver runs on. (:8080)
+The port the fileserver runs on. (:8080)
 
 #### `-directory`
 The directory to serve files from. (./root)
 
 ## Tagfiles
 - By default, these are files named `_tags.txt`.
-- When a file is requested, the server will first check for a tagfile in the parent directory of the requested file. The server will look for a tag where the first value matches the name of the requested file. The request is handled based on the tag name.
+- When a file is requested, the server will first check for a tagfile in the parent directory of the requested file. The server will look for a tag where the selector matches the name of the requested file. The request is handled based on the tag name.
 - Only one tag handler function will be executed per request.
-- Tag files can be modified without restarting the server.
+- The server always reads the tags in the same order that they are written in the tagfile.
+- Tagfiles can be modified without restarting the server.
+
+### Anatomy of a tag
+```
+         tag
+┏━━━━━━━━━┻━━━━━━━━━╍┅
+#pseudo home home.html
+ ┃      ┃    ┗━━━┳━━╍┅
+ name   ┃    arguments
+        ┃
+        selector
+```
+- The name determines which tag handler function will be executed.
+  - The name is always immedietly preceded by a `#`.
+- The selector determines which requests will match with the tag.
+  - The server only looks at the last element of the requested path when comparing the request to the selector.
+- The additional arguments are passed to the tag handler function as an array of strings.
+  - You may have any number of additional arguments.
+  - Arguments are separated by spaces.
 
 ## Default Tags
 
-#### `#ignore value1`
-Trying to access the file named `value1` will result in a 404 error. Use this to prevent people from accessing certain files.
+#### `#ignore`
+- Takes no additional arguments.
+- Trying to access the selected file will result in a 404 error.
+- Use this to prevent people from accessing certain files.
 
-#### `#pseudo value1 value2`
-Getting the file named `value1` will instead get the file named `value2`.
+#### `#pseudo`
+- Takes one additional argument.
+- A request for the selected file will instead get the file named in the first argument.
 
-#### `#redirect value1 value2`
-A request for `value1` will redirect the request to the URL `value2`.
+#### `#redirect`
+- Takes one additional argument.
+- A request for the selected file will redirect the request to the URL in the first argument.
+
+#### `#default`
+- Takes no additional arguments.
+- Serves the file at the requested path.
+- If a request is not caught by any tags in the tagfile, it will be handled by the default tag handler function.
+
+## Advanced selectors
+- You can use `*` to select all files, e.g. 
+  - `#ignore *` will hide all the files in the directory.
+- You can select requests where only the name needs to match or where only the extension needs to match, e.g. 
+  - `#ignore secret.*` will ignore all files named `secret` disregarding the extension.
+	- `#ignore *.txt` will ignore all files that have the `.txt` extension.
 
 ## Custom Tags
-Look at `request` and `reverseproxy` as examples.
-Import the `request` package and attach the custom tag handler to your server like this:
-```go
-package main
-
-import (
-	"log"
-	"net/http"
-	"github.com/rbxb/fileserve"
-	"github.com/rbxb/fileserve/request"
-)
-
-func main() {
-	server := fileserve.NewServer("./root", map[string]fileserve.TagHandler{
-		"request": request.RequestTagHandler,
-	})
-	log.Fatal(http.ListenAndServe(":8080", server))
-}
-```
-Now **`#request value1 value2`** will perform a GET request to the URL in `value2` and respond with the response.
-Try it by adding this to your tagfile:
-```
-#request google https://google.com
-```
-`localhost:8080/google` should show the html from `google.com`.
-
-Write your own custom tag handlers in Go. A tag handler function follows this type:
-```go
-type TagHandler func(* Server, []string, http.ResponseWriter, * http.Request) error
-```
+Learn how to write custom tag handler functions at [customtags.md](customtags.md).
 
 ## Other notes
 
@@ -103,13 +109,6 @@ type TagHandler func(* Server, []string, http.ResponseWriter, * http.Request) er
 	contact contact.html
 #ignore
 	secrets.txt
-```
-- You can use `*` to select all files, e.g. `#ignore *` will hide all the files in the directory.
-- You can select requests where only the name needs to match or where only the extension needs to match, e.g.
-```
-#ignore
-	secret.*
-	*.txt
 ```
 - You can change the name of the tagfiles. By default the tagfile name is `_tags.txt`.
 ```go

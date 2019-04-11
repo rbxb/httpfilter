@@ -8,11 +8,11 @@ import (
 	"errors"
 )
 
-func ReverseProxyTagHandler(srvr * fileserve.Server, vals []string, w http.ResponseWriter, req * http.Request) error {
-	if len(vals) < 2 {
+func ReverseProxyTagHandler(srvr * fileserve.Server, args []string, w http.ResponseWriter, req * http.Request) error {
+	if len(args) < 1 {
 		return fileserve.ErrorNotEnoughArguments
 	}
-	u, err := url.Parse(vals[1])
+	u, err := url.Parse(args[0])
 	if err != nil {
 		return errors.New("Couldn't parse URL.")
 	}

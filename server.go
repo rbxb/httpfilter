@@ -53,12 +53,14 @@ func(srvr * Server) ServeHTTP(w http.ResponseWriter, req * http.Request) {
 		(vname == "*" && vext == ext) {     // or if extension matches and name in tagfile is *
 			handler := srvr.tagHandlers[vals[0]]
 			if handler != nil {
-				err := handler(srvr, vals[1:], w, req)
-				if err != nil {
+				err := handler(srvr, vals[2:], w, req)
+				switch err {
+				case nil:
+					break
+				default:
 					http.Error(w, "Internal error.", 500)
 					return
 				}
-				break
 			}
 		}
 	}

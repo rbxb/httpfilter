@@ -6,11 +6,11 @@ import (
 	"github.com/rbxb/fileserve"
 )
 
-func RequestTagHandler(srvr * fileserve.Server, vals []string, w http.ResponseWriter, req * http.Request) error {
-	if len(vals) < 2 {
+func RequestTagHandler(srvr * fileserve.Server, args []string, w http.ResponseWriter, req * http.Request) error {
+	if len(args) < 1 {
 		return fileserve.ErrorNotEnoughArguments
 	}
-	resp, err := http.Get(vals[1])
+	resp, err := http.Get(args[0])
 	if err != nil {
 		return err
 	}
