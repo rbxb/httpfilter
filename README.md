@@ -90,7 +90,7 @@ The directory to serve files from. (./root)
   - `#ignore *` will hide all the files in the directory.
 - You can select requests where only the name needs to match or where only the extension needs to match, e.g. 
   - `#ignore secret.*` will ignore all files named `secret` disregarding the extension.
-	- `#ignore *.txt` will ignore all files that have the `.txt` extension.
+  - `#ignore *.txt` will ignore all files that have the `.txt` extension.
 
 ## Custom Tags
 Learn how to write custom tag handler functions at [customtags.md](customtags.md).
