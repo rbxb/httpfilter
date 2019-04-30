@@ -56,7 +56,7 @@ func(srvr * Server) ServeHTTP(w http.ResponseWriter, req * http.Request) {
 				err := handler(srvr, vals[2:], w, req)
 				switch err {
 				case nil:
-					break
+					return
 				default:
 					http.Error(w, "Internal error.", 500)
 					return
