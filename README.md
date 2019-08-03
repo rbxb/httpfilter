@@ -1,117 +1,176 @@
-# fileserve
+# httpfilter
 
-This package will help you quickly setup a basic server for serving webpages. The server uses configuration files (called tagfiles) to determine how requests are handled. These files can be modified live.
+ - [Installation](#Installation)
+ - [Tutorial](#Tutorial)
+ - [How it Works](#How-it-Works)
+ - [Usage Example](#Usage-Example)
+ - [Standard Operators](#Standard-Operators)
+ - [Writing Filters](#Writing-Filters)
+ - [Attaching Additional Operators](#Attaching-Additional-Operators)
+ - [Writing Operator Functions](#Writing-Operator-Functions)
+
+## Installation
+
+```shell
+$ go get github.com/rbxb/httpfilter
+$ go install github.com/rbxb/httpfilter/cmd/httpfilter
+```
 
 ## Tutorial
-[tutorial.md](tutorial.md)
 
-## Basic Usage Example
-```shell
-$ go get github.com/rbxb/fileserve
+Playing around with the pre-made sample should help you get a feel for how httpfilter works.
+
+[tutorial.md](./tutorial.md)
+
+## How it Works
+
+httpfilter uses scripts (*called filters*) nested in the website's static files directories to invoke Go functions that modify how the request is handled. For example, if you wanted to make the request path `/index.html` redirect to `/home.html`, you could use a filter like this:
 ```
+#redirect index.html home.html
+```
+This filter file would be placed in the same directory as the supposed `index.html` file and the `home.html` file.
+
+When the httpfilter server recieves a request for `/index.html`, it will first look for the filter in the same directory as the requested file. The server will read the filter from the top—down, searching for an entry where the **selector** matches the requested file name (*also called the query*). If an entry's selector matches the query, the server will call the Go function that is mapped to the **operator** of that entry. Any additional **arguments** are passed to the Go function as a slice of strings.
+
+```
+        entry
+┏━━━━━━━━━┻━━━━━━━━━━━━━━━━╍┅
+#redirect index.html home.html
+ ┃          ┃       ┗━━━┳━━╍┅
+ operator   ┃        arguments
+            ┃
+         selector
+```
+
+The httpfilter server passes the query to the operator function, which will either write a response or return a modified query. The server will use the modified query to compare against the next selectors in the filter and the server will pass the modified query to the next operator function. The server will continue to read and execute entries from the filter until a response has been written.
+
+If the server reaches the end of the filter and a response still hasn't been written, the server will call the default operator, which will attempt to serve the file named *query* or respond with a `404 Not found` error.
+
+## Usage Example
+
+Create an httpfilter `Server` and pass it to `http.ListenAndServe`.
+
 ```go
 package main
 
 import (
 	"log"
 	"net/http"
-	"github.com/rbxb/fileserve"
+	"github.com/rbxb/httpfilter"
 )
 
 func main() {
-	server := fileserve.NewServer("./root", nil)
+	server := httpfilter.NewServer("./root")
 	log.Fatal(http.ListenAndServe(":8080", server))
 }
 ```
 
-## cmd/fileserve
-A simple implementation of the package to get you started.
+## Standard Operators
 
-```shell
-$ go install github.com/rbxb/fileserve/cmd/fileserve
-$ fileserve -port :8080 -directory ./root
+#### `deft`
+
+*The default operator.*  
+The `deft` operator attempts to serve the file named *query* or responds with a `404 Not found` error.
+A `#deft *` will be automatically appended to the end of every filter.
+
+#### `ignore`
+
+The `ignore` operator responds with a `404 Not Found` error. Use this if you want to prevent access to a specific file, e.g.
+```
+#ignore secret.txt
 ```
 
-### Flags
+#### `pseudo`
 
-#### `-port`
-The port the fileserver runs on. (:8080)
-
-#### `-directory`
-The directory to serve files from. (./root)
-
-## Tagfiles
-- By default, these are files named `_tags.txt`.
-- When a file is requested, the server will first check for a tagfile in the parent directory of the requested file. The server will look for a tag where the selector matches the name of the requested file. The request is handled based on the tag name.
-- Only one tag handler function will be executed per request.
-- The server always reads the tags in the same order that they are written in the tagfile.
-- Tagfiles can be modified without restarting the server.
-
-### Anatomy of a tag
+The `pseudo` operator replaces the query with the first argument. Use this if you want to make a file appear as if it has a different name.
 ```
-         tag
-┏━━━━━━━━━┻━━━━━━━━━╍┅
 #pseudo home home.html
- ┃      ┃    ┗━━━┳━━╍┅
- name   ┃    arguments
-        ┃
-        selector
 ```
-- The name determines which tag handler function will be executed.
-  - The name is always immedietly preceded by a `#`.
-- The selector determines which requests will match with the tag.
-  - The server only looks at the last element of the requested path when comparing the request to the selector.
-- The additional arguments are passed to the tag handler function as an array of strings.
-  - You may have any number of additional arguments.
-  - Arguments are separated by spaces.
+The client may request either `/home` or `/home.html` and they will both serve `home.html`.
 
-## Default Tags
+#### `redirect`
 
-#### `#ignore`
-- Takes no additional arguments.
-- Trying to access the selected file will result in a 404 error.
-- Use this to prevent people from accessing certain files.
+The `redirect` operator redirects a request to the URL or path in the first argument. E.g. this will redirect `/index.html` to `/home.html`:
+```
+#redirect index.html home.html
+```
 
-#### `#pseudo`
-- Takes one additional argument.
-- A request for the selected file will instead get the file named in the first argument.
+## Writing Filters
 
-#### `#redirect`
-- Takes one additional argument.
-- A request for the selected file will redirect the request to the URL in the first argument.
+Operators are always prefixed by a `#`.
+Operators, selectors, and arguments are separated by spaces.
+Entries are separated by line breaks.
 
-#### `#default`
-- Takes no additional arguments.
-- Serves the file at the requested path.
-- If a request is not caught by any tags in the tagfile, it will be handled by the default tag handler function.
+The default operators can be very powerful if you use them in combination.
+A few reminders:
+ - The filter is read from the top—down and the server will never read upwards
+ - The query may be changed by operator functions
 
-## Advanced selectors
-- You can use `*` to select all files, e.g. 
-  - `#ignore *` will hide all the files in the directory.
-- You can select requests where only the name needs to match or where only the extension needs to match, e.g. 
-  - `#ignore secret.*` will ignore all files named `secret` disregarding the extension.
-  - `#ignore *.txt` will ignore all files that have the `.txt` extension.
+Here is an example showing how the query can change:
+```
+#pseudo secret.txt a
+#ignore secret.txt
+#pseudo a secret.txt
+```
+In this example, clients *will* be able to access `secret.txt`. When the client requests `/secret.txt`, the first `pseudo` call renames the query to `a`. The `ignore` has no effect on the query `a`. The second `pseudo` renames the query back to `secret.txt`. Finally, the default operator will recieve the query `secret.txt` and serve the file.
 
-## Custom Tags
-Learn how to write custom tag handler functions at [customtags.md](customtags.md).
+### Selectors with `*`
 
-## Other notes
+You can use a `*` in the selector to select all queries.
+ - `*` will match with all queries.
+ - `a.*` will match with all queries where the name is `a` regardless of the extension.
+ - `*.a` will match with all queries where the extension is `.a`.
 
-- It (should be) impossible to retrieve files that are outside of the root directory.
-- You may have a tag file outside of the root directory in the same directory that root is in. You can use this to select requests which have no path, e.g. a request to `localhost:8080` with no path could be selected using the name `root`.
-- Since all paths are already relative to `root/`, do not include `root` in paths in tagfiles.
-- Only one tag handler will be executed per request. You *cannot* make an infinite loop of `#pseudo`, though you *can* make a redirect loop.
-- When writing tag files, you don't have to specify the tag on every line--use linebreaks and indents, e.g.
+For example, this filter will `ignore` all queries where the extension is `.txt`:
+```
+#ignore *.txt
+```
+
+### Bulk Operator Syntax
+
+If you have multiple entries that use the same operator repeatedly, e.g.
+```
+#pseudo home home.html
+#pseudo about about.html
+#pseudo contact contact.html
+```
+you can write the operator once and put the entries below it:
 ```
 #pseudo
-	home home.html
-	about about.html
-	contact contact.html
-#ignore
-	secrets.txt
+  home home.html
+  about about.html
+  contact contact.html
 ```
-- You can change the name of the tagfiles. By default the tagfile name is `_tags.txt`.
+
+### Naming
+
+Currently, filter files must be named `_filters.txt`.
+Place the file in the directory that you want it to work in.
+The httpfilter server will never serve a filter file to a client.
+
+## Attaching Additional Operators
+
+Non-standard operator functions can be attached to the server.
+Pass them to `NewServer` as a `map[string]OpFunc`, where the map key is the operator name that should be used in the filter file to call the operator function.
 ```go
-Server.SetTagfileName(name string)
+func NewServer(root string, ops ...map[string]OpFunc) * Server
 ```
-- You can overwrite the default tag handler functions (`#ignore`, `#pseudo`, `#redirect`, and `#default`) with your own handlers.
+Pass in your own operator functions:
+```go
+server := httpfilter.NewServer("./root", map[string]httpfilter.OpFunc{
+		"myop": myOpFunc,
+	})
+```
+The standard operators can be overwritten by passing in operators with the same key value.
+
+## Writing Operator Functions
+
+You can write your own operator functions and attach them to your server (see [Attaching Additional Operators](#Attaching-Additional-Operators)).
+
+Operator functions follow this type:
+```go
+type OpFunc func(w http.ResponseWriter, req * http.Request, query string, args []string) string
+```
+
+When the operator function returns, the server will replace the query with the returned string.
+If the operator function calls `w.WriteHeader`, the server will stop executing entries and the request/response is completed.

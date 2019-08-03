@@ -1,85 +1,84 @@
-package fileserve
+package httpfilter
 
 import (
 	"net/http"
 	"path/filepath"
-	"io/ioutil"
 	"mime"
+	"io/ioutil"
+	"errors"
 )
+
+var filterFileName = "_filters.txt"
 
 type Server struct {
 	root string
-	tagfile string
-	tagHandlers map[string]TagHandler
+	ops map[string]OpFunc
 }
 
-func NewServer(root string, tagHandlers map[string]TagHandler) * Server {
-	defaultTagHandlers := map[string]TagHandler {
-		"ignore": ignore,
-		"pseudo": pseudo,
-		"redirect": redirect,
-		"default": deft,
+func NewServer(root string, ops ...map[string]OpFunc) * Server {
+	sv := &Server{
+		root: root,
 	}
-	if tagHandlers != nil {
-		for k, v := range tagHandlers {
-			defaultTagHandlers[k] = v
+	sv.ops = map[string]OpFunc{
+		"deft":     sv.serveFile,
+		"ignore":   ignore,
+		"pseudo":   pseudo,
+		"redirect": redirect,
+	}
+	for _, m := range ops {
+		for k, v := range m {
+			sv.ops[k] = v
 		}
 	}
-	return &Server{
-		root: root,
-		tagfile: "_tags.txt",
-		tagHandlers: defaultTagHandlers,
-	}
+	return sv
 }
 
-func(srvr * Server) ServeHTTP(w http.ResponseWriter, req * http.Request) {
-	tags := make([][]string, 0)
-	p := filepath.Join(srvr.root, filepath.Clean("/" + req.URL.Path))
-	b, err := ioutil.ReadFile(filepath.Join(filepath.Dir(p), srvr.tagfile))
-	if err == nil {
-		tags = parseTagdata(b)
-	}
-	tags = append(tags, []string{"default", "*"})
-	base := filepath.Base(p)
-	ext := filepath.Ext(base)
-	name := base[:len(base) - len(ext)]
-	for _, vals := range tags {
-		vbase := vals[1]
-		vext := filepath.Ext(vbase)
-		vname := vals[1][:len(vbase) - len(vext)]
-		if (vbase == base) ||               // if name and extension match
-		(vbase == "*") ||                   // or if name in tagfile is *
-		(vext == ".*" && vname == name) ||  // or if name matches and extension in tagfile is *
-		(vname == "*" && vext == ext) {     // or if extension matches and name in tagfile is *
-			handler := srvr.tagHandlers[vals[0]]
-			if handler != nil {
-				err := handler(srvr, vals[2:], w, req)
-				switch err {
-				case nil:
-					return
-				default:
-					http.Error(w, "Internal error.", 500)
-					return
-				}
+func(sv * Server) ServeHTTP(w http.ResponseWriter, req * http.Request) {
+	wr := wrapWriter(w)
+	query := filepath.Join(sv.root, req.URL.Path)
+	dir := filepath.Dir(query)
+	query = filepath.Base(query)
+	filters := parseFilterFile(filepath.Join(dir, filterFileName))
+	for _, v := range filters {
+		if !<-wr.ok {
+			break
+		}
+		wr.ok <- true
+		if match(query,v[1]) {
+			if op := sv.ops[v[0]]; op != nil {
+				query = op(wr, req, query, v[2:])
+			} else {
+				panic(errors.New("Undefined operator " + v[0]))
 			}
 		}
 	}
 }
 
-func(srvr * Server) ServeFile(name string, w http.ResponseWriter, req * http.Request) {
-	name = filepath.Join(srvr.root, filepath.Clean("/" + name))
-	if filepath.Base(name) == srvr.tagfile {
-		name = ""
+func(sv * Server) serveFile(w http.ResponseWriter, req * http.Request, query string, args []string) string {
+	if query == filterFileName {
+		http.Error(w, "Not found.", 404)
+		return ""
 	}
+	name := filepath.Dir(req.URL.Path)
+	name = filepath.Join(sv.root, name)
+	name = filepath.Join(name, query)
 	b, err := ioutil.ReadFile(name)
 	if err != nil {
 		http.Error(w, "Not found.", 404)
-		return
+		return ""
 	}
-	w.Header().Set("Content-Type", mime.TypeByExtension(filepath.Ext(name)))
+	w.Header().Set("Content-Type", mime.TypeByExtension(filepath.Ext(query)))
 	w.Write(b)
+	return ""
 }
 
-func(srvr * Server) SetTagfileName(name string) {
-	srvr.tagfile = name
+func match(q, s string) bool {
+	se := filepath.Ext(s)		//selector ext
+	sn := s[:len(s)-len(se)]	//selector name
+	qe := filepath.Ext(q)		//query ext
+	qn := q[:len(q)-len(qe)]	//query name
+	return 	(q == s) || 				//name and extension match
+			(s == "*") || 				//selector is *
+			(se == ".*" && qn == sn) || //selector ext is * and name matches
+			(sn == "*" && qe == se)		//selector name is * and ext matches
 }

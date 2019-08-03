@@ -1,3 +1,3 @@
-module github.com/rbxb/fileserve
+module github.com/rbxb/httpfilter
 
 go 1.12
