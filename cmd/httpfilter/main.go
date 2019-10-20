@@ -11,8 +11,8 @@ var port string
 var root string
 
 func init() {
-	flag.StringVar(&port, "port", ":8080", "The address and port the fileserver listens at. (:8080)")
-	flag.StringVar(&root, "root", "./root", "The directory serving files. (./root)")
+	flag.StringVar(&port, "port", ":8080", "The address and port the fileserver listens at.")
+	flag.StringVar(&root, "root", "./root", "The directory serving files.")
 }
 
 func main() {
