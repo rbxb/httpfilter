@@ -12,7 +12,7 @@ var Ops = map[string]httpfilter.OpFunc{"request": Request}
 
 func Request(w http.ResponseWriter, req httpfilter.FilterRequest) string {
 	if len(req.Args) < 1 {
-		panic(errors.New("Not enough arguments."))
+		panic(errors.New("not enough arguments"))
 		return ""
 	}
 	resp, err := http.Get(req.Args[0])
