@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"github.com/rbxb/httpfilter"
+	"github.com/rbxb/httpfilter/request"
+	"github.com/rbxb/httpfilter/reverseproxy"
 )
 
 var port string
@@ -17,6 +19,6 @@ func init() {
 
 func main() {
 	flag.Parse()
-	sv := httpfilter.NewServer(root)
+	sv := httpfilter.NewServer(root, request.Ops, reverseproxy.Ops)
 	log.Fatal(http.ListenAndServe(port, sv))
 }
