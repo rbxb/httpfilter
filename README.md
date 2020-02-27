@@ -169,8 +169,21 @@ You can write your own operator functions and attach them to your server (see [A
 
 Operator functions follow this type:
 ```go
-type OpFunc func(w http.ResponseWriter, req * http.Request, query string, args []string) string
+type OpFunc func(w http.ResponseWriter, req httpfilter.FilterRequest) string
 ```
+
+The `FilterRequest` object looks like this:
+```go
+type FilterRequest struct {
+	*http.Request
+	Query      string
+	Args       []string
+	...
+}
+```
+
+You may attach a generic session interface to the request using `FilterRequest.SetSession(interface{})`.  
+This session can be accessed in any future operator functions that handle the request by calling `FilterRequest.GetSession()`.
 
 When the operator function returns, the server will replace the query with the returned string.
 If the operator function calls `w.WriteHeader`, the server will stop executing entries and the request/response is completed.
