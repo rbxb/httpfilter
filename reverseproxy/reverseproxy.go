@@ -22,6 +22,9 @@ func ReverseProxy(w http.ResponseWriter, req httpfilter.FilterRequest) string {
 		return ""
 	}
 	proxy := httputil.NewSingleHostReverseProxy(u)
+	proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
+		http.Error(w, "Internal error.", 500)
+	}
 	proxy.ServeHTTP(w, req.Request)
 	return ""
 }
