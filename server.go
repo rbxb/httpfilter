@@ -24,6 +24,8 @@ func NewServer(root string, ops ...map[string]OpFunc) *Server {
 		"ignore":   ignore,
 		"pseudo":   pseudo,
 		"redirect": redirect,
+		"proxy":    proxy,
+		"request":  request,
 	}
 	for _, m := range ops {
 		for k, v := range m {
