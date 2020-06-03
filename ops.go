@@ -26,7 +26,7 @@ func redirect(w http.ResponseWriter, req FilterRequest) string {
 	if len(req.Args) < 1 {
 		panic(errors.New("not enough arguments"))
 	}
-	http.Redirect(w, req.Request, req.Args[0], 301)
+	http.Redirect(w, req.Request, req.Args[0], 302)
 	return ""
 }
 
