@@ -21,8 +21,8 @@ func NewServer(root string, ops ...map[string]OpFunc) *Server {
 	}
 	sv.ops = map[string]OpFunc{
 		"deft":     sv.serveFile,
+		"serve":    sv.serveFile,
 		"ignore":   ignore,
-		"pseudo":   pseudo,
 		"redirect": redirect,
 		"proxy":    proxy,
 		"request":  request,

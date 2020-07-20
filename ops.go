@@ -15,13 +15,6 @@ func ignore(w http.ResponseWriter, req FilterRequest) string {
 	return ""
 }
 
-func pseudo(w http.ResponseWriter, req FilterRequest) string {
-	if len(req.Args) < 1 {
-		panic(errors.New("not enough arguments"))
-	}
-	return req.Args[0]
-}
-
 func redirect(w http.ResponseWriter, req FilterRequest) string {
 	if len(req.Args) < 1 {
 		panic(errors.New("not enough arguments"))
