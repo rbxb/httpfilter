@@ -6,27 +6,29 @@ import (
 
 type writerWrapper struct {
 	http.ResponseWriter
-	ok chan bool
+	ok chan byte
 }
 
 func (wrapper *writerWrapper) WriteHeader(statusCode int) {
-	<-wrapper.ok
 	wrapper.ResponseWriter.WriteHeader(statusCode)
-	wrapper.ok <- false
+	if _, ok := <-wrapper.ok; ok {
+		close(wrapper.ok)
+	}
 }
 
 func (wrapper *writerWrapper) Write(b []byte) (int, error) {
-	<-wrapper.ok
 	n, err := wrapper.ResponseWriter.Write(b)
-	wrapper.ok <- false
+	if _, ok := <-wrapper.ok; ok {
+		close(wrapper.ok)
+	}
 	return n, err
 }
 
 func wrapWriter(w http.ResponseWriter) *writerWrapper {
 	wrapper := &writerWrapper{
 		ResponseWriter: w,
-		ok:             make(chan bool, 1),
+		ok:             make(chan byte, 1),
 	}
-	wrapper.ok <- true
+	wrapper.ok <- 0
 	return wrapper
 }

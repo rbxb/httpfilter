@@ -28,7 +28,7 @@ func parseFilterFile(path string) [][]string {
 			entries = appendEntry(tag, vals, entries)
 		}
 	}
-	return appendEntry("deft", []string{"*"}, entries)
+	return entries
 }
 
 func appendEntry(tag string, vals []string, entries [][]string) [][]string {

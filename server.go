@@ -20,7 +20,6 @@ func NewServer(root string, ops ...map[string]OpFunc) *Server {
 		root: root,
 	}
 	sv.ops = map[string]OpFunc{
-		"deft":     sv.serveFile,
 		"serve":    sv.serveFile,
 		"ignore":   ignore,
 		"redirect": redirect,
@@ -37,52 +36,41 @@ func NewServer(root string, ops ...map[string]OpFunc) *Server {
 
 func (sv *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	wr := wrapWriter(w)
-	query := filepath.Join(sv.root, req.URL.Path)
-	dir := filepath.Dir(query)
-	query = filepath.Base(query)
+	name := filepath.Join(sv.root, req.URL.Path)
+	dir, name := filepath.Split(name)
 	filters := parseFilterFile(filepath.Join(dir, filterFileName))
-	var session interface{}
 	for _, v := range filters {
-		if !<-wr.ok {
+		if _, ok := <-wr.ok; !ok {
 			break
 		}
-		wr.ok <- true
-		if match(query, v[1]) {
+		wr.ok <- 0
+		if match(name, v[1]) {
 			if op := sv.ops[v[0]]; op != nil {
-				query = op(wr, FilterRequest{
-					Request: req,
-					Query:   query,
-					Args:    v[2:],
-					setSession: func(v interface{}) {
-						session = v
-					},
-					getSession: func() interface{} {
-						return session
-					},
-				})
+				op(wr, req, v[2:]...)
 			} else {
 				panic(errors.New("Undefined operator " + v[0]))
 			}
 		}
 	}
+	if _, ok := <-wr.ok; ok {
+		sv.serveFile(w, req, name)
+	}
 }
 
-func (sv *Server) serveFile(w http.ResponseWriter, req FilterRequest) string {
-	if req.Query == filterFileName {
+func (sv *Server) serveFile(w http.ResponseWriter, req *http.Request, args ...string) {
+	path := filepath.Join(sv.root, filepath.Dir(req.URL.Path), args[0])
+	name := filepath.Base(path)
+	if name == filterFileName {
 		http.Error(w, "Not found.", 404)
-		return ""
+		return
 	}
-	name := filepath.Dir(req.URL.Path)
-	name = filepath.Join(sv.root, name)
-	name = filepath.Join(name, req.Query)
-	b, err := ioutil.ReadFile(name)
+	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		http.Error(w, "Not found.", 404)
-		return ""
+		return
 	}
-	w.Header().Set("Content-Type", mime.TypeByExtension(filepath.Ext(req.Query)))
+	w.Header().Set("Content-Type", mime.TypeByExtension(name))
 	w.Write(b)
-	return ""
 }
 
 func match(q, s string) bool {

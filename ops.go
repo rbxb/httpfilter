@@ -8,26 +8,24 @@ import (
 	"net/url"
 )
 
-type OpFunc func(w http.ResponseWriter, req FilterRequest) string
+type OpFunc func(w http.ResponseWriter, req *http.Request, args ...string)
 
-func ignore(w http.ResponseWriter, req FilterRequest) string {
+func ignore(w http.ResponseWriter, req *http.Request, args ...string) {
 	http.Error(w, "Not found.", 404)
-	return ""
 }
 
-func redirect(w http.ResponseWriter, req FilterRequest) string {
-	if len(req.Args) < 1 {
+func redirect(w http.ResponseWriter, req *http.Request, args ...string) {
+	if len(args) < 1 {
 		panic(errors.New("not enough arguments"))
 	}
-	http.Redirect(w, req.Request, req.Args[0], 302)
-	return ""
+	http.Redirect(w, req, args[0], 302)
 }
 
-func proxy(w http.ResponseWriter, req FilterRequest) string {
-	if len(req.Args) < 1 {
+func proxy(w http.ResponseWriter, req *http.Request, args ...string) {
+	if len(args) < 1 {
 		panic(errors.New("not enough arguments"))
 	}
-	u, err := url.Parse(req.Args[0])
+	u, err := url.Parse(args[0])
 	if err != nil {
 		panic(errors.New("couldn't parse URL"))
 	}
@@ -35,26 +33,24 @@ func proxy(w http.ResponseWriter, req FilterRequest) string {
 	proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
 		http.Error(w, "Internal error.", 500)
 	}
-	proxy.ServeHTTP(w, req.Request)
-	return ""
+	proxy.ServeHTTP(w, req)
 }
 
-func request(w http.ResponseWriter, req FilterRequest) string {
-	if len(req.Args) < 1 {
+func request(w http.ResponseWriter, req *http.Request, args ...string) {
+	if len(args) < 1 {
 		panic(errors.New("not enough arguments"))
 	}
-	resp, err := http.Get(req.Args[0])
+	resp, err := http.Get(args[0])
 	if err != nil {
 		http.Error(w, "Internal error.", 500)
-		return ""
+		return
 	}
 	defer resp.Body.Close()
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		http.Error(w, "Internal error.", 500)
-		return ""
+		return
 	}
 	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
 	w.Write(b)
-	return ""
 }
