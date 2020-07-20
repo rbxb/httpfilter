@@ -15,16 +15,10 @@ func ignore(w http.ResponseWriter, req *http.Request, args ...string) {
 }
 
 func redirect(w http.ResponseWriter, req *http.Request, args ...string) {
-	if len(args) < 1 {
-		panic(errors.New("not enough arguments"))
-	}
 	http.Redirect(w, req, args[0], 302)
 }
 
 func proxy(w http.ResponseWriter, req *http.Request, args ...string) {
-	if len(args) < 1 {
-		panic(errors.New("not enough arguments"))
-	}
 	u, err := url.Parse(args[0])
 	if err != nil {
 		panic(errors.New("couldn't parse URL"))
@@ -37,9 +31,6 @@ func proxy(w http.ResponseWriter, req *http.Request, args ...string) {
 }
 
 func request(w http.ResponseWriter, req *http.Request, args ...string) {
-	if len(args) < 1 {
-		panic(errors.New("not enough arguments"))
-	}
 	resp, err := http.Get(args[0])
 	if err != nil {
 		http.Error(w, "Internal error.", 500)
