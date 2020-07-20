@@ -9,26 +9,26 @@ type writerWrapper struct {
 	ok chan byte
 }
 
-func (wrapper *writerWrapper) WriteHeader(statusCode int) {
-	wrapper.ResponseWriter.WriteHeader(statusCode)
-	if _, ok := <-wrapper.ok; ok {
-		close(wrapper.ok)
+func (wr *writerWrapper) WriteHeader(statusCode int) {
+	wr.ResponseWriter.WriteHeader(statusCode)
+	if _, ok := <-wr.ok; ok {
+		close(wr.ok)
 	}
 }
 
-func (wrapper *writerWrapper) Write(b []byte) (int, error) {
-	n, err := wrapper.ResponseWriter.Write(b)
-	if _, ok := <-wrapper.ok; ok {
-		close(wrapper.ok)
+func (wr *writerWrapper) Write(b []byte) (int, error) {
+	n, err := wr.ResponseWriter.Write(b)
+	if _, ok := <-wr.ok; ok {
+		close(wr.ok)
 	}
 	return n, err
 }
 
 func wrapWriter(w http.ResponseWriter) *writerWrapper {
-	wrapper := &writerWrapper{
+	wr := &writerWrapper{
 		ResponseWriter: w,
 		ok:             make(chan byte, 1),
 	}
-	wrapper.ok <- 0
-	return wrapper
+	wr.ok <- 0
+	return wr
 }
