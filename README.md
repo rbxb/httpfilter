@@ -30,7 +30,7 @@ httpfilter uses scripts (*called filters*) nested in the website's static files 
 ```
 This filter file would be placed in the same directory as the supposed `index.html` file and the `home.html` file.
 
-When the httpfilter server recieves a request for `/index.html`, it will first look for the filter in the same directory as the requested file. The server will read the filter from the top—down, searching for an entry where the **selector** matches the requested file name (*also called the query*). If an entry's selector matches the query, the server will call the Go function that is mapped to the **operator** of that entry. Any additional **arguments** are passed to the Go function as a slice of strings.
+When the httpfilter server recieves a request for `/index.html`, it will first look for the filter in the same directory as the requested file. The server will read the filter from the top—down, searching for an entry where the **selector** matches the requested file name. If an entry's selector matches the requested file name, the server will call the Go function that is mapped to the **operator** of that entry. Any additional **arguments** are passed to the Go function as strings.
 
 ```
         entry
@@ -42,9 +42,9 @@ When the httpfilter server recieves a request for `/index.html`, it will first l
          selector
 ```
 
-The httpfilter server passes the query to the operator function, which will either write a response or return a modified query. The server will use the modified query to compare against the next selectors in the filter and the server will pass the modified query to the next operator function. The server will continue to read and execute entries from the filter until a response has been written.
+The httpfilter server passes the request and arguments to the operator function, which may a response. The server will continue to read and execute entries from the filter until a response has been written.
 
-If the server reaches the end of the filter and a response still hasn't been written, the server will call the default operator, which will attempt to serve the file named *query* or respond with a `404 Not found` error.
+If the server reaches the end of the filter and a response still hasn't been written, the server will call the `serve` operator, which will attempt to serve the file or respond with a `404 Not found` error.
 
 ## Usage Example
 
@@ -67,11 +67,10 @@ func main() {
 
 ## Standard Operators
 
-#### `deft`
+#### `serve`
 
-*The default operator.*  
-The `deft` operator attempts to serve the file named *query* or responds with a `404 Not found` error.
-A `#deft *` will be automatically appended to the end of every filter.
+The `serve` operator attempts to serve the file named in the first argument or responds with a `404 Not found` error.   
+If the request is not fulfilled at the end of the filter file, the httpfilter serve will default to the serve operator to write a response.
 
 #### `ignore`
 
@@ -79,14 +78,6 @@ The `ignore` operator responds with a `404 Not Found` error. Use this if you wan
 ```
 #ignore secret.txt
 ```
-
-#### `pseudo`
-
-The `pseudo` operator replaces the query with the first argument. Use this if you want to make a file appear as if it has a different name.
-```
-#pseudo home home.html
-```
-The client may request either `/home` or `/home.html` and they will both serve `home.html`.
 
 #### `redirect`
 
@@ -97,22 +88,10 @@ The `redirect` operator redirects a request to the URL or path in the first argu
 
 ## Writing Filters
 
-Operators are always prefixed by a `#`.
-Operators, selectors, and arguments are separated by spaces.
-Entries are separated by line breaks.
-
-The default operators can be very powerful if you use them in combination.
-A few reminders:
+ - Operators are always prefixed by a `#`.
+ - Operators, selectors, and arguments are separated by spaces.
+ - Entries are separated by line breaks.
  - The filter is read from the top—down and the server will never read upwards
- - The query may be changed by operator functions
-
-Here is an example showing how the query can change:
-```
-#pseudo secret.txt a
-#ignore secret.txt
-#pseudo a secret.txt
-```
-In this example, clients *will* be able to access `secret.txt`. When the client requests `/secret.txt`, the first `pseudo` call renames the query to `a`. The `ignore` has no effect on the query `a`. The second `pseudo` renames the query back to `secret.txt`. Finally, the default operator will recieve the query `secret.txt` and serve the file.
 
 ### Selectors with `*`
 
@@ -130,13 +109,13 @@ For example, this filter will `ignore` all queries where the extension is `.txt`
 
 If you have multiple entries that use the same operator repeatedly, e.g.
 ```
-#pseudo home home.html
-#pseudo about about.html
-#pseudo contact contact.html
+#serve home home.html
+#serve about about.html
+#serve contact contact.html
 ```
 you can write the operator once and put the entries below it:
 ```
-#pseudo
+#serve
   home home.html
   about about.html
   contact contact.html
@@ -169,21 +148,7 @@ You can write your own operator functions and attach them to your server (see [A
 
 Operator functions follow this type:
 ```go
-type OpFunc func(w http.ResponseWriter, req httpfilter.FilterRequest) string
+type OpFunc func(w http.ResponseWriter, req *http.Request, args ...string)
 ```
 
-The `FilterRequest` object looks like this:
-```go
-type FilterRequest struct {
-	*http.Request
-	Query      string
-	Args       []string
-	...
-}
-```
-
-You may attach a generic session interface to the request using `FilterRequest.SetSession(interface{})`.  
-This session can be accessed in any future operator functions that handle the request by calling `FilterRequest.GetSession()`.
-
-When the operator function returns, the server will replace the query with the returned string.
-If the operator function calls `w.WriteHeader`, the server will stop executing entries and the request/response is completed.
+If the operator function calls `w.Write` or `w.WriteHeader`, the server will stop executing entries and the request/response is completed.
