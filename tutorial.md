@@ -22,7 +22,7 @@ Now we have a server that will serve static files from the directory `/httpfiler
 
 ### The `serve` operator
 
-The `pseudo` operator immedietly serves the file named in the first argument. Use this if you want to make a file appear as if it has a different name.
+The `serve` operator immedietly serves the file named in the first argument. You can use this if you want to make a file appear as if it has a different name.
 
 Try going to `localhost:8080/home.html`. You should see "**Hello world!**". Try going to `localhost:8080/home`. You should get a `404 Not found` error.
 
