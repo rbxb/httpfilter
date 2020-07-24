@@ -85,10 +85,9 @@ func match(req *http.Request, s string) bool {
 	var q string
 	if s[0] == byte('@') {
 		split := strings.Split(req.Host, ".")
+		q = "@"
 		if len(split) > 2 {
-			q = split[0]
-		} else {
-			q = "@"
+			q += split[0]
 		}
 	} else {
 		q = filepath.Base(req.URL.Path)
