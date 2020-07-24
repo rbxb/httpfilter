@@ -2,6 +2,8 @@ package httpfilter
 
 import (
 	"errors"
+	"io/ioutil"
+	"mime"
 	"net/http"
 	"path/filepath"
 )
@@ -9,13 +11,15 @@ import (
 var filterFileName = "_filters.txt"
 
 type Server struct {
-	root string
-	ops  map[string]OpFunc
+	root   string
+	filter string
+	ops    map[string]OpFunc
 }
 
-func NewServer(root string, ops ...map[string]OpFunc) *Server {
+func NewServer(root string, filter string, ops ...map[string]OpFunc) *Server {
 	sv := &Server{
-		root: root,
+		root:   root,
+		filter: filter,
 	}
 	sv.ops = map[string]OpFunc{
 		"serve":    sv.serveFile,
@@ -36,7 +40,12 @@ func (sv *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	wr := wrapWriter(w)
 	name := filepath.Join(sv.root, req.URL.Path)
 	dir, name := filepath.Split(name)
-	filters := parseFilterFile(filepath.Join(dir, filterFileName))
+	var filters [][]string
+	if sv.filter == "" {
+		filters = parseFilterFile(filepath.Join(dir, filterFileName))
+	} else {
+		filters = parseFilterFile(sv.filter)
+	}
 	for _, v := range filters {
 		if _, ok := <-wr.ok; !ok {
 			break
@@ -57,7 +66,18 @@ func (sv *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func (sv *Server) serveFile(w http.ResponseWriter, req *http.Request, args ...string) {
 	path := filepath.Join(sv.root, filepath.Dir(req.URL.Path), args[0])
-	serveFile(w, path)
+	name := filepath.Base(path)
+	if name == filterFileName {
+		http.Error(w, "Not found.", 404)
+		return
+	}
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		http.Error(w, "Not found.", 404)
+		return
+	}
+	w.Header().Set("Content-Type", mime.TypeByExtension(name))
+	w.Write(b)
 }
 
 func match(q, s string) bool {
