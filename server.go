@@ -82,13 +82,13 @@ func (sv *Server) serveFile(w http.ResponseWriter, req *http.Request, args ...st
 }
 
 func match(req *http.Request, s string) bool {
-	var q string
+	q := ""
 	if s[0] == byte('@') {
 		split := strings.Split(req.Host, ".")
-		q = "@"
 		if len(split) > 2 {
-			q += split[0]
+			q = split[0]
 		}
+		s = s[1:]
 	} else {
 		q = filepath.Base(req.URL.Path)
 	}
