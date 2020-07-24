@@ -6,6 +6,7 @@ import (
 	"mime"
 	"net/http"
 	"path/filepath"
+	"strings"
 )
 
 var filterFileName = "_filters.txt"
@@ -51,7 +52,7 @@ func (sv *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 		wr.ok <- 0
-		if match(name, v[1]) {
+		if match(req, v[1]) {
 			if op := sv.ops[v[0]]; op != nil {
 				op(wr, req, v[2:]...)
 			} else {
@@ -80,7 +81,18 @@ func (sv *Server) serveFile(w http.ResponseWriter, req *http.Request, args ...st
 	w.Write(b)
 }
 
-func match(q, s string) bool {
+func match(req *http.Request, s string) bool {
+	var q string
+	if s[0] == byte('@') {
+		split := strings.Split(req.Host, ".")
+		if len(split) > 2 {
+			q = split[0]
+		} else {
+			q = "@"
+		}
+	} else {
+		q = filepath.Base(req.URL.Path)
+	}
 	se := filepath.Ext(s)    //selector ext
 	sn := s[:len(s)-len(se)] //selector name
 	qe := filepath.Ext(q)    //query ext
