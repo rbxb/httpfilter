@@ -60,7 +60,7 @@ import (
 )
 
 func main() {
-	server := httpfilter.NewServer("./root")
+	server := httpfilter.NewServer("./root", "")
 	log.Fatal(http.ListenAndServe(":8080", server))
 }
 ```
@@ -93,7 +93,9 @@ The `redirect` operator redirects a request to the URL or path in the first argu
  - Entries are separated by line breaks.
  - The filter is read from the top—down and the server will never read upwards
 
-### Selectors with `*`
+### Selectors
+
+## Using `*`
 
 You can use a `*` in the selector to select all queries.
  - `*` will match with all queries.
@@ -103,6 +105,16 @@ You can use a `*` in the selector to select all queries.
 For example, this filter will `ignore` all queries where the extension is `.txt`:
 ```
 #ignore *.txt
+```
+
+## Using `@`
+
+Using the `@` symbol selects a request by its subdomain.   
+
+For example, this filter will proxy the subdomain `service` to a local server and redirect the base domain to the `service` subdomain.
+```
+#proxy @service http://localhost:288
+#redirect @ http://service.example.com
 ```
 
 ### Bulk Operator Syntax
@@ -152,3 +164,11 @@ type OpFunc func(w http.ResponseWriter, req *http.Request, args ...string)
 ```
 
 If the operator function calls `w.Write` or `w.WriteHeader`, the server will stop executing entries and the request/response is completed.
+
+### Fixed Filter File
+
+```go
+server := httpfilter.NewServer("./root", "C:/_filter.txt")
+```
+
+Putting a path into the second argument of the server constructor will force the server to use that filter file for every request. You can use a fixed filter file and the `@` selector to route subdomains to other servers.
