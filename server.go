@@ -2,8 +2,6 @@ package httpfilter
 
 import (
 	"errors"
-	"io/ioutil"
-	"mime"
 	"net/http"
 	"path/filepath"
 )
@@ -59,18 +57,7 @@ func (sv *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func (sv *Server) serveFile(w http.ResponseWriter, req *http.Request, args ...string) {
 	path := filepath.Join(sv.root, filepath.Dir(req.URL.Path), args[0])
-	name := filepath.Base(path)
-	if name == filterFileName {
-		http.Error(w, "Not found.", 404)
-		return
-	}
-	b, err := ioutil.ReadFile(path)
-	if err != nil {
-		http.Error(w, "Not found.", 404)
-		return
-	}
-	w.Header().Set("Content-Type", mime.TypeByExtension(name))
-	w.Write(b)
+	serveFile(w, path)
 }
 
 func match(q, s string) bool {
