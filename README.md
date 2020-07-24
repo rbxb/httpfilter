@@ -93,9 +93,7 @@ The `redirect` operator redirects a request to the URL or path in the first argu
  - Entries are separated by line breaks.
  - The filter is read from the top—down and the server will never read upwards
 
-### Selectors
-
-## Using `*`
+### Selectors using `*`
 
 You can use a `*` in the selector to select all queries.
  - `*` will match with all queries.
@@ -107,7 +105,7 @@ For example, this filter will `ignore` all queries where the extension is `.txt`
 #ignore *.txt
 ```
 
-## Using `@`
+### Selectors using `@`
 
 Using the `@` symbol selects a request by its subdomain.   
 
@@ -165,7 +163,7 @@ type OpFunc func(w http.ResponseWriter, req *http.Request, args ...string)
 
 If the operator function calls `w.Write` or `w.WriteHeader`, the server will stop executing entries and the request/response is completed.
 
-### Fixed Filter File
+## Fixed Filter File
 
 ```go
 server := httpfilter.NewServer("./root", "C:/_filter.txt")
