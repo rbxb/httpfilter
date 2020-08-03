@@ -41,24 +41,14 @@ func (sv *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	wr := wrapWriter(w)
 	name := filepath.Join(sv.root, req.URL.Path)
 	dir, name := filepath.Split(name)
-	var filters [][]string
+	var filter string
 	if sv.filter == "" {
-		filters = parseFilterFile(filepath.Join(dir, filterFileName))
+		filter = filepath.Join(dir, filterFileName)
 	} else {
-		filters = parseFilterFile(sv.filter)
+		filter = sv.filter
 	}
-	for _, v := range filters {
-		if _, ok := <-wr.ok; !ok {
-			break
-		}
-		wr.ok <- 0
-		if match(req, v[1]) {
-			if op := sv.ops[v[0]]; op != nil {
-				op(wr, req, v[2:]...)
-			} else {
-				panic(errors.New("Undefined operator " + v[0]))
-			}
-		}
+	if p, err := ioutil.ReadFile(filter); err == nil {
+		sv.parseFilter(p, wr, req)
 	}
 	if _, ok := <-wr.ok; ok {
 		sv.serveFile(w, req, name)
@@ -100,4 +90,34 @@ func match(req *http.Request, s string) bool {
 		(s == "*") || //selector is *
 		(se == ".*" && qn == sn) || //selector ext is * and name matches
 		(sn == "*" && qe == se) //selector name is * and ext matches
+}
+
+func (sv *Server) parseFilter(p []byte, wr *writerWrapper, req *http.Request) {
+	lines := strings.Split(string(p), string('\n'))
+	op := ""
+	vals := make([]string, 0)
+	for _, line := range lines {
+		for _, word := range strings.Split(line, " ") {
+			if word = strings.TrimSpace(word); len(word) < 1 {
+				continue
+			}
+			if word[0] == '#' {
+				op = word[1:]
+			} else {
+				vals = append(vals, word)
+			}
+		}
+		if len(vals) > 0 && match(req, vals[0]) {
+			if f := sv.ops[op]; f != nil {
+				f(wr, req, vals[1:]...)
+			} else {
+				panic(errors.New("Undefined operator " + op))
+			}
+			if _, ok := <-wr.ok; !ok {
+				break
+			}
+			wr.ok <- 0
+		}
+		vals = vals[:0]
+	}
 }
