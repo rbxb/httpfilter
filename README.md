@@ -8,6 +8,7 @@
  - [Writing Filters](#Writing-Filters)
  - [Attaching Additional Operators](#Attaching-Additional-Operators)
  - [Writing Operator Functions](#Writing-Operator-Functions)
+ - [Fixed Filter File](#Fixed-Filter-File)
 
 ## Installation
 
@@ -69,8 +70,12 @@ func main() {
 
 #### `serve`
 
-The `serve` operator attempts to serve the file named in the first argument or responds with a `404 Not found` error.   
+The `serve` operator attempts to serve the file named in the first argument or responds with a `404 Not found` error. E.g. this will serve the file `home.html` when the client requests `/home`:  
+```
+#serve home home.html
+```
 If the request is not fulfilled at the end of the filter file, the httpfilter serve will default to the serve operator to write a response.
+
 
 #### `ignore`
 
@@ -81,9 +86,9 @@ The `ignore` operator responds with a `404 Not Found` error. Use this if you wan
 
 #### `redirect`
 
-The `redirect` operator redirects a request to the URL or path in the first argument. E.g. this will redirect `/index.html` to `/home.html`:
+The `redirect` operator redirects a request to the URL or path in the first argument. E.g. this will redirect `/index.html` to `/home`:
 ```
-#redirect index.html home.html
+#redirect index.html home
 ```
 
 ## Writing Filters
