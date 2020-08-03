@@ -1,7 +1,6 @@
 package httpfilter
 
 import (
-	"errors"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -95,12 +94,9 @@ func match(req *http.Request, s string) bool {
 func (sv *Server) parseFilter(p []byte, wr *writerWrapper, req *http.Request) {
 	lines := strings.Split(string(p), string('\n'))
 	op := ""
-	vals := make([]string, 0)
 	for _, line := range lines {
-		for _, word := range strings.Split(line, " ") {
-			if word = strings.TrimSpace(word); len(word) < 1 {
-				continue
-			}
+		vals := make([]string, 0)
+		for _, word := range strings.Fields(line) {
 			if word[0] == '#' {
 				op = word[1:]
 			} else {
@@ -108,16 +104,11 @@ func (sv *Server) parseFilter(p []byte, wr *writerWrapper, req *http.Request) {
 			}
 		}
 		if len(vals) > 0 && match(req, vals[0]) {
-			if f := sv.ops[op]; f != nil {
-				f(wr, req, vals[1:]...)
-			} else {
-				panic(errors.New("Undefined operator " + op))
-			}
+			sv.ops[op](wr, req, vals[1:]...)
 			if _, ok := <-wr.ok; !ok {
 				break
 			}
 			wr.ok <- 0
 		}
-		vals = vals[:0]
 	}
 }
