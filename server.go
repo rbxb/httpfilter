@@ -1,6 +1,7 @@
 package httpfilter
 
 import (
+	"bytes"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -92,19 +93,19 @@ func match(req *http.Request, s string) bool {
 }
 
 func (sv *Server) parseFilter(p []byte, wr *writerWrapper, req *http.Request) {
-	lines := strings.Split(string(p), string('\n'))
-	op := ""
+	lines := bytes.Split(p, []byte{'\n'})
+	var op []byte
 	for _, line := range lines {
 		vals := make([]string, 0)
-		for _, word := range strings.Fields(line) {
+		for _, word := range bytes.Fields(line) {
 			if word[0] == '#' {
 				op = word[1:]
 			} else {
-				vals = append(vals, word)
+				vals = append(vals, string(word))
 			}
 		}
 		if len(vals) > 0 && match(req, vals[0]) {
-			sv.ops[op](wr, req, vals[1:]...)
+			sv.ops[string(op)](wr, req, vals[1:]...)
 			if _, ok := <-wr.ok; !ok {
 				break
 			}
