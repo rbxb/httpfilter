@@ -43,7 +43,7 @@ When the httpfilter server recieves a request for `/index.html`, it will first l
          selector
 ```
 
-The httpfilter server passes the request and arguments to the operator function, which may a response. The server will continue to read and execute entries from the filter until a response has been written.
+The httpfilter server passes the request and arguments to the operator function, which may write a response. The server will continue to read and execute entries from the filter until a response has been written.
 
 If the server reaches the end of the filter and a response still hasn't been written, the server will call the `serve` operator, which will attempt to serve the file or respond with a `404 Not found` error.
 
