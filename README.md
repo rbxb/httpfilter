@@ -91,6 +91,20 @@ The `redirect` operator redirects a request to the URL or path in the first argu
 #redirect index.html home
 ```
 
+#### `proxy`
+
+The `proxy` operator uses a reverse proxy to communicate with another server by forwarding the client's request to the end server provided in the first argument:
+```
+#proxy page.html http://192.168.1.6:80
+```
+
+#### `request`
+
+The `request` is used to communicate with another server by making a new GET request to the server in the first argument:
+```
+#request page.html http://192.168.1.6:80
+```
+
 ## Writing Filters
 
  - Operators are always prefixed by a `#`.
