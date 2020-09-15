@@ -130,7 +130,7 @@ Using the `@` symbol selects a request by its subdomain.
 
 For example, this filter will proxy the subdomain `service` to a local server and redirect the base domain to the `service` subdomain.
 ```
-#proxy @service http://localhost:288
+#proxy @service http://192.168.1.6:80
 #redirect @ http://service.example.com
 ```
 
