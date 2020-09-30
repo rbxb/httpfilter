@@ -74,7 +74,7 @@ The `serve` operator attempts to serve the file named in the first argument or r
 ```
 #serve home home.html
 ```
-If the request is not fulfilled at the end of the filter file, the httpfilter serve will default to the serve operator to write a response.
+If the request is not fulfilled at the end of the filter file, the httpfilter server will default to the serve operator to write a response.
 
 
 #### `ignore`
@@ -161,11 +161,11 @@ The httpfilter server will never serve a filter file to a client.
 Non-standard operator functions can be attached to the server.
 Pass them to `NewServer` as a `map[string]OpFunc`, where the map key is the operator name that should be used in the filter file to call the operator function.
 ```go
-func NewServer(root string, ops ...map[string]OpFunc) * Server
+func NewServer(root string, filter string, ops ...map[string]OpFunc) * Server
 ```
 Pass in your own operator functions:
 ```go
-server := httpfilter.NewServer("./root", map[string]httpfilter.OpFunc{
+server := httpfilter.NewServer("./root", "", map[string]httpfilter.OpFunc{
 		"myop": myOpFunc,
 	})
 ```
