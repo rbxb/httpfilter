@@ -43,7 +43,7 @@ When the httpfilter server recieves a request for `/index.html`, it will first l
          selector
 ```
 
-The httpfilter server passes the request and arguments to the operator function, which may a response. The server will continue to read and execute entries from the filter until a response has been written.
+The httpfilter server passes the request and arguments to the operator function, which may write a response. The server will continue to read and execute entries from the filter until a response has been written.
 
 If the server reaches the end of the filter and a response still hasn't been written, the server will call the `serve` operator, which will attempt to serve the file or respond with a `404 Not found` error.
 
@@ -74,7 +74,7 @@ The `serve` operator attempts to serve the file named in the first argument or r
 ```
 #serve home home.html
 ```
-If the request is not fulfilled at the end of the filter file, the httpfilter serve will default to the serve operator to write a response.
+If the request is not fulfilled at the end of the filter file, the httpfilter server will default to the serve operator to write a response.
 
 
 #### `ignore`
@@ -89,6 +89,20 @@ The `ignore` operator responds with a `404 Not Found` error. Use this if you wan
 The `redirect` operator redirects a request to the URL or path in the first argument. E.g. this will redirect `/index.html` to `/home`:
 ```
 #redirect index.html home
+```
+
+#### `proxy`
+
+The `proxy` operator forwards the client's request to the end server provided in the first argument and responds with the end server's response:
+```
+#proxy page.html http://192.168.1.6:80
+```
+
+#### `request`
+
+The `request` makes a new GET request to the server in the first argument and responds with the end server's response:
+```
+#request page.html http://192.168.1.6:80
 ```
 
 ## Writing Filters
@@ -116,7 +130,7 @@ Using the `@` symbol selects a request by its subdomain.
 
 For example, this filter will proxy the subdomain `service` to a local server and redirect the base domain to the `service` subdomain.
 ```
-#proxy @service http://localhost:288
+#proxy @service http://192.168.1.6:80
 #redirect @ http://service.example.com
 ```
 
@@ -147,11 +161,11 @@ The httpfilter server will never serve a filter file to a client.
 Non-standard operator functions can be attached to the server.
 Pass them to `NewServer` as a `map[string]OpFunc`, where the map key is the operator name that should be used in the filter file to call the operator function.
 ```go
-func NewServer(root string, ops ...map[string]OpFunc) * Server
+func NewServer(root string, filter string, ops ...map[string]OpFunc) * Server
 ```
 Pass in your own operator functions:
 ```go
-server := httpfilter.NewServer("./root", map[string]httpfilter.OpFunc{
+server := httpfilter.NewServer("./root", "", map[string]httpfilter.OpFunc{
 		"myop": myOpFunc,
 	})
 ```
