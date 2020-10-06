@@ -34,7 +34,3 @@ func wrapWriter(w http.ResponseWriter) *writerWrapper {
 	wr.ok <- 0
 	return wr
 }
-
-func (wr *writerWrapper) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return wr.ResponseWriter.(http.Hijacker).Hijack()
-}
