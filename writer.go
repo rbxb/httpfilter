@@ -1,12 +1,13 @@
 package httpfilter
 
 import (
+	"bufio"
+	"net"
 	"net/http"
 )
 
 type writerWrapper struct {
 	http.ResponseWriter
-	http.Hijacker
 	ok chan byte
 }
 
@@ -28,9 +29,12 @@ func (wr *writerWrapper) Write(b []byte) (int, error) {
 func wrapWriter(w http.ResponseWriter) *writerWrapper {
 	wr := &writerWrapper{
 		ResponseWriter: w,
-		Hijacker:       w.(http.Hijacker),
 		ok:             make(chan byte, 1),
 	}
 	wr.ok <- 0
 	return wr
+}
+
+func (wr *writerWrapper) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return wr.ResponseWriter.(http.Hijacker).Hijack()
 }
