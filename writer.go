@@ -1,8 +1,6 @@
 package httpfilter
 
 import (
-	"bufio"
-	"net"
 	"net/http"
 )
 
