@@ -24,9 +24,9 @@ func proxy(w http.ResponseWriter, req *http.Request, args ...string) {
 	if err != nil {
 		panic(errors.New("couldn't parse URL"))
 	}
+	log.Println(req.Proto)
 	proxy := httputil.NewSingleHostReverseProxy(u)
 	proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
-		log.Println(err)
 		http.Error(w, "Internal error.", 500)
 	}
 	proxy.ServeHTTP(w, req)
@@ -41,7 +41,6 @@ func request(w http.ResponseWriter, req *http.Request, args ...string) {
 	defer resp.Body.Close()
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, "Internal error.", 500)
 		return
 	}
