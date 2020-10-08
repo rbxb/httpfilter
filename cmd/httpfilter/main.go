@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"log"
 	"net/http"
@@ -26,14 +27,19 @@ func init() {
 
 func main() {
 	flag.Parse()
-	sv := httpfilter.NewServer(root, filter)
+	fs := httpfilter.NewServer(root, filter)
+	server := http.Server{
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)), //disable HTTP/2
+		Addr:         port,
+		Handler:      fs,
+	}
 	if ssl {
 		go func() {
 			log.Fatal(http.ListenAndServe(":80", http.HandlerFunc(redirectTLS)))
 		}()
-		log.Fatal(http.ListenAndServeTLS(port, cert, key, sv))
+		log.Fatal(server.ListenAndServeTLS(cert, key))
 	} else {
-		log.Fatal(http.ListenAndServe(port, sv))
+		log.Fatal(server.ListenAndServe())
 	}
 }
 
