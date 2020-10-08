@@ -3,7 +3,6 @@ package httpfilter
 import (
 	"errors"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -24,7 +23,6 @@ func proxy(w http.ResponseWriter, req *http.Request, args ...string) {
 	if err != nil {
 		panic(errors.New("couldn't parse URL"))
 	}
-	log.Println(req.Proto)
 	proxy := httputil.NewSingleHostReverseProxy(u)
 	proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
 		http.Error(w, "Internal error.", 500)
