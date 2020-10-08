@@ -25,8 +25,7 @@ func proxy(w http.ResponseWriter, req *http.Request, args ...string) {
 	}
 	proxy := httputil.NewSingleHostReverseProxy(u)
 	proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
-		http.Error(w, "Internal error.", 555)
-		panic(err)
+		http.Error(w, "Internal error.", 500)
 	}
 	proxy.ServeHTTP(w, req)
 }
