@@ -67,7 +67,7 @@ func (sv *Server) serveFile(w http.ResponseWriter, req *http.Request, args ...st
 		http.Error(w, "Not found.", 404)
 		return
 	}
-	w.Header().Set("Content-Type", mime.TypeByExtension(name))
+	w.Header().Set("Content-Type", mime.TypeByExtension(filepath.Ext(name)))
 	w.Write(b)
 }
 
