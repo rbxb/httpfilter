@@ -82,14 +82,28 @@ func match(req *http.Request, s string) bool {
 	} else {
 		q = filepath.Base(req.URL.Path)
 	}
-	se := filepath.Ext(s)    //selector ext
-	sn := s[:len(s)-len(se)] //selector name
-	qe := filepath.Ext(q)    //query ext
-	qn := q[:len(q)-len(qe)] //query name
-	return (q == s) ||       //name and extension match
-		(s == "*") || //selector is *
-		(se == ".*" && qn == sn) || //selector ext is * and name matches
-		(sn == "*" && qe == se) //selector name is * and ext matches
+	re := matchExtensions(q, s)
+	return re
+}
+
+func matchExtensions(q string, s string) bool {
+	qsplit := strings.Split(q, ".")
+	ssplit := strings.Split(s, ".")
+	if len(qsplit) > len(ssplit) {
+		return false
+	}
+	for i := 0; i < len(ssplit); i++ {
+		if i == len(qsplit) {
+			if i != 0 && qsplit[i-1] == "*" {
+				return true
+			}
+			return false
+		}
+		if qsplit[i] != "*" && qsplit[i] != ssplit[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func (sv *Server) parseFilter(p []byte, wr *writerWrapper, req *http.Request) {
