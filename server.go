@@ -74,10 +74,7 @@ func (sv *Server) serveFile(w http.ResponseWriter, req *http.Request, args ...st
 func match(req *http.Request, s string) bool {
 	q := ""
 	if s[0] == byte('@') {
-		split := strings.Split(req.Host, ".")
-		if len(split) > 2 {
-			q = split[0]
-		}
+		q = req.Host
 		s = s[1:]
 	} else {
 		q = filepath.Base(req.URL.Path)
@@ -89,17 +86,14 @@ func match(req *http.Request, s string) bool {
 func matchExtensions(q string, s string) bool {
 	qsplit := strings.Split(q, ".")
 	ssplit := strings.Split(s, ".")
-	if len(qsplit) > len(ssplit) {
-		return false
+	if len(ssplit) == 1 && ssplit[0] == "*" {
+		return true
+	}
+	if len(ssplit) != len(qsplit) {
+		return false;
 	}
 	for i := 0; i < len(ssplit); i++ {
-		if i == len(qsplit) {
-			if i != 0 && qsplit[i-1] == "*" {
-				return true
-			}
-			return false
-		}
-		if qsplit[i] != "*" && qsplit[i] != ssplit[i] {
+		if ssplit[i] != "*" && ssplit[i] != qsplit[i] {
 			return false
 		}
 	}
