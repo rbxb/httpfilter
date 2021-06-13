@@ -15,7 +15,7 @@ func ignore(w http.ResponseWriter, req *http.Request, args ...string) {
 }
 
 func redirect(w http.ResponseWriter, req *http.Request, args ...string) {
-	http.Redirect(w, req, args[0], 302)
+	http.Redirect(w, req, args[0], http.StatusFound)
 }
 
 func proxy(w http.ResponseWriter, req *http.Request, args ...string) {
