@@ -1,5 +1,16 @@
 # httpfilter
 
+httpfilter is a package that allows you to bundle your website's content with the behavior that determines how the content is made visible by your web server.  
+
+On many websites the URL path that a user goes to is different from the internal path of the actual resource that the server responds with. For example, if you go to `https://ryanburleson.dev/home`, the path visible to the user is `/home`, but the path of the HTML file that is served is actually `/home.html`.  
+
+Typically, the way to acheive this behavior is to hard code it into your web server. You may use a mapping function to define a request path and a corresponding resource path. This introduces two problems:
+1. The code that determines how a resource should be made visible is separated from the actual content.
+2. If you want to add new resources, you must modify your web server code.
+
+**httpfilter** aims to solve both of these problems. httpfilter uses simple scripts that are embeded in the same file directory as your resources in order to bundle the content and behavior and allow you to dynamically change the behavior without modifying the server code.  
+This makes your web resources more modular, i.e. a directory containing some content also contains the code that specifies how that content should be displayed by a web server.  
+
  - [Installation](#Installation)
  - [Tutorial](#Tutorial)
  - [How it Works](#How-it-Works)
